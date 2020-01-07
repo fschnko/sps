@@ -118,7 +118,7 @@ func (t *Topic) Poll(name string) ([][]byte, error) {
 			return
 		}
 
-		if len(t.messages) == 0 {
+		if len(t.messages) == 0 || t.sequence == lastID {
 			return
 		}
 

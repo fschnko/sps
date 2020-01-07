@@ -1,13 +1,13 @@
-#The simple pub-sub data bus.
+# The simple pub-sub data bus.
 
-##Overview
+## Overview
 
 The package sps provide a thread safe messaging data bus.
 Currently all data stored in the memory and can't be used for a stateful applications. 
 
-#Usage
+# Usage
 
-###Publisher
+### Publisher
 
 ```golang
 func main(){
@@ -19,7 +19,7 @@ func main(){
 }
 ```
 
-###Subscriber
+### Subscriber
 
 ```golang
 func main() {

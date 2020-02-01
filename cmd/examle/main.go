@@ -11,31 +11,33 @@ import (
 	"github.com/fschnko/sps"
 )
 
+const baseInterval = time.Nanosecond
+
 func main() {
 	bus := sps.New()
 	defer bus.Close()
 
 	done := make(chan struct{})
 
-	go publisher(bus, "top1", "pub1", time.Second, done)
-	go publisher(bus, "top1", "pub2", time.Second, done)
-	go publisher(bus, "top1", "pub1", time.Second, done)
-	go publisher(bus, "top1", "pub2", time.Second, done)
-	go publisher(bus, "top1", "pub1", time.Second, done)
-	go publisher(bus, "top1", "pub2", time.Second, done)
-	go publisher(bus, "top1", "pub1", time.Second, done)
-	go publisher(bus, "top1", "pub2", time.Second, done)
-	go publisher(bus, "top1", "pub1", time.Second, done)
-	go publisher(bus, "top1", "pub2", time.Second, done)
-	go publisher(bus, "top1", "pub1", time.Second, done)
-	go publisher(bus, "top1", "pub2", time.Second, done)
-	go subscriber(bus, "top1", "sub1", time.Second*2, done)
-	go subscriber(bus, "top1", "sub2", time.Second*4, done)
+	go publisher(bus, "top1", "pub1", baseInterval, done)
+	go publisher(bus, "top1", "pub2", baseInterval, done)
+	go publisher(bus, "top1", "pub1", baseInterval, done)
+	go publisher(bus, "top1", "pub2", baseInterval, done)
+	go publisher(bus, "top1", "pub1", baseInterval, done)
+	go publisher(bus, "top1", "pub2", baseInterval, done)
+	go publisher(bus, "top1", "pub1", baseInterval, done)
+	go publisher(bus, "top1", "pub2", baseInterval, done)
+	go publisher(bus, "top1", "pub1", baseInterval, done)
+	go publisher(bus, "top1", "pub2", baseInterval, done)
+	go publisher(bus, "top1", "pub1", baseInterval, done)
+	go publisher(bus, "top1", "pub2", baseInterval, done)
+	go subscriber(bus, "top1", "sub1", baseInterval*2, done)
+	go subscriber(bus, "top1", "sub2", baseInterval*4, done)
 
-	go publisher(bus, "top2", "pub3", time.Second, done)
-	go publisher(bus, "top1", "pub4", time.Second, done)
-	go subscriber(bus, "top2", "sub1", time.Second*3, done)
-	go subscriber(bus, "top2", "sub2", time.Second*5, done)
+	go publisher(bus, "top2", "pub3", baseInterval, done)
+	go publisher(bus, "top1", "pub4", baseInterval, done)
+	go subscriber(bus, "top2", "sub1", baseInterval*3, done)
+	go subscriber(bus, "top2", "sub2", baseInterval*5, done)
 
 	sigs := make(chan os.Signal, 1)
 
@@ -57,7 +59,7 @@ func publisher(bus *sps.Databus, topic, pub string, interval time.Duration, done
 				ticker.Stop()
 				return
 			}
-		case <-ticker.C:
+		default:
 			msg := fmt.Sprintf("%s/#%d", pub, i)
 			bus.Publish(topic, []byte(msg))
 		}

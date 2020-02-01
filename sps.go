@@ -4,7 +4,7 @@ import "sync"
 
 // Databus thread safe messaging bus.
 type Databus struct {
-	mu     sync.Mutex
+	mu     sync.RWMutex
 	topics map[string]*Topic
 }
 
@@ -18,14 +18,17 @@ func New() *Databus {
 // Subscribe creates a new subscription for the topic.
 // Creates a new topic if it doesn't exist.
 func (b *Databus) Subscribe(topicName, subscriberName string) {
-	t, _ := b.get(topicName, true)
+	t, ok := b.get(topicName)
+	if !ok {
+		t = b.create(topicName)
+	}
 
 	t.Subscribe(subscriberName)
 }
 
 // Unsubscribe removes the subscription from the topic.
 func (b *Databus) Unsubscribe(topicName, subscriberName string) {
-	t, ok := b.get(topicName, false)
+	t, ok := b.get(topicName)
 	if ok {
 		t.Unsubscribe(subscriberName)
 	}
@@ -34,7 +37,7 @@ func (b *Databus) Unsubscribe(topicName, subscriberName string) {
 // Poll returns a list of unread messages.
 // Returns an error if no topic or subscription found.
 func (b *Databus) Poll(topicName, subscriberName string) ([][]byte, error) {
-	t, ok := b.get(topicName, false)
+	t, ok := b.get(topicName)
 	if !ok {
 		return nil, ErrNoTopicFound
 	}
@@ -42,9 +45,11 @@ func (b *Databus) Poll(topicName, subscriberName string) ([][]byte, error) {
 }
 
 // Publish adds a new message to the topic pool.
-func (b *Databus) Publish(topicName string, jsonBody []byte) {
-	t, _ := b.get(topicName, true)
-	t.Publish(jsonBody)
+func (b *Databus) Publish(topicName string, msg []byte) {
+	t, ok := b.get(topicName)
+	if ok {
+		t.Publish(msg)
+	}
 }
 
 // Close closes all topics and releases allocated resources.
@@ -58,19 +63,23 @@ func (b *Databus) Close() {
 	}
 }
 
-func (b *Databus) get(topicName string, create bool) (*Topic, bool) {
+func (b *Databus) get(topicName string) (*Topic, bool) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	t, ok := b.topics[topicName]
+	return t, ok
+}
+
+func (b *Databus) create(topicName string) *Topic {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	t, ok := b.topics[topicName]
-	if ok {
-		return t, ok
-	}
-
-	if create {
+	if !ok {
 		t = NewTopic()
 		b.topics[topicName] = t
 	}
 
-	return t, t != nil
+	return t
 }
